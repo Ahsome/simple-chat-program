@@ -13,7 +13,7 @@ namespace ClientExecutable
 {
     class MainExecutable
     {
-        static bool isLoggedIn;
+        private static bool isLoggedIn;
         static string usernameCredential = "";
         static void Main(string[] args)
         {
