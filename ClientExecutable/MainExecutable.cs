@@ -8,9 +8,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace ClientExecutable
 {
-    class Program
+    class MainExecutable
     {
         static bool isLoggedIn;
         static string usernameCredential = "";
@@ -41,9 +42,9 @@ namespace ClientExecutable
                     String option = Console.ReadLine();
                     if (option == "LOGIN" && !isLoggedIn)
                     {
-                        InitiateLogin(ipAd);
+                        LoginToServer(ipAd);
                     }
-                    if (option == "CHAT" && isLoggedIn)
+                    else if (option == "CHAT" && isLoggedIn)
                     {
                         InitiateChat(ipAd);
                     }
@@ -56,6 +57,10 @@ namespace ClientExecutable
             }
         }
 
+        /// <summary>
+        /// Initiates the chat.
+        /// </summary>
+        /// <param name="ipAddress">The ip address.</param>
         static void InitiateChat(IPAddress ipAddress)
         {
             Console.Clear();
@@ -78,8 +83,9 @@ namespace ClientExecutable
 
             if (new String(receivedInput) == "JoinedChat")
             {
-                Console.WriteLine("You have successfully joined the chat!");
+                Console.WriteLine("You have successfully joined the chat! Press any key to continue");
                 Console.ReadKey();
+                ActivateChat(ipAddress,stm);
                 return;
             }
             else
@@ -89,10 +95,71 @@ namespace ClientExecutable
             }
         }
 
-        static void InitiateLogin(IPAddress inpAddress)
+        private static void ActivateChat(IPAddress ipAddress, Stream stm)
+        {
+            //TODO: GUI of the program
+            Console.Clear();
+            Console.WriteLine("Welcome to Chat!\n");
+
+            ASCIIEncoding asen = new ASCIIEncoding();
+            byte[] ba = asen.GetBytes("RECEIVECHATNUMBER");
+
+            stm.Write(ba, 0, ba.Length);
+            Console.WriteLine("Sent ReceiveChatNumber");
+
+            byte[] bb = new byte[100];
+            int k = stm.Read(bb, 0, 100);
+
+            char[] tempChatLines = new char[k];
+
+            for (int i = 0; i < k; i++)
+                tempChatLines[i] = (Convert.ToChar(bb[i]));
+            Console.WriteLine("Number is {0}",new String(tempChatLines));
+
+            //TODO: Check for exception thrown 
+            string optionString = new string(tempChatLines);
+            int numberOfChatLines = int.Parse(optionString);
+
+            Console.WriteLine("Successfully turned CHAR ARRAY to {0}",numberOfChatLines);
+            ba = asen.GetBytes("RECEIVEPREVIOUSCHAT");
+            stm.Write(ba, 0, ba.Length);
+
+            string[] chatLines = new string[numberOfChatLines - 1];
+            for (int i = 0; i < numberOfChatLines; i++)
+            {
+                tempChatLines = new char[k];
+                bb = new byte[10000];
+                k = stm.Read(bb, 0, 10000);
+                for (int r = 0; r < k; r++)
+                {
+                    tempChatLines[k] = (Convert.ToChar(bb[k]));
+                }
+                string currentChatString = new string(tempChatLines);
+                chatLines[i] = currentChatString;
+
+                ba = asen.GetBytes("RECEIVEDPREVIOUSCHAT");
+                stm.Write(ba, 0, ba.Length);
+            }
+
+            foreach (var chatLine in chatLines)
+            {
+                Console.WriteLine("> {0}", chatLine);
+            }
+            //TODO: Do the actual logic
+            while (true)
+            {
+
+            }
+        }
+
+        /// <summary>
+        /// Logins to the main server.
+        /// </summary>
+        /// <param name="ipAddress">The ip address of the server.</param>
+        static void LoginToServer(IPAddress ipAddress)
         {
             TcpClient tcpClient = new TcpClient();
-            tcpClient.Connect(inpAddress, 8001);
+            tcpClient.Connect(ipAddress, 8001);
             Stream stm = tcpClient.GetStream();
 
             ASCIIEncoding asen = new ASCIIEncoding();
